@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>OD Drive - Motorista</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body class="mobile-body">
+  <div class="mobile-shell">
+    <header class="mobile-header">
+      <h1>Área do Motorista</h1>
+      <p class="small">Siga o fluxo e capture as imagens</p>
+    </header>
+
+    <section id="driverLogin" class="mobile-card">
+      <form id="driverLoginForm" class="form-grid">
+        <div class="form-group">
+          <label for="driverName">Nome completo</label>
+          <input id="driverName" name="name" type="text" placeholder="Seu nome" required />
+        </div>
+        <div class="form-group">
+          <label for="driverPhone">Número de celular</label>
+          <input id="driverPhone" name="phone" type="tel" inputmode="numeric" placeholder="(00) 90000-0000" required />
+        </div>
+        <div class="form-group form-actions">
+          <button type="submit" class="btn btn--primary" id="driverLoginSubmit">Entrar</button>
+        </div>
+      </form>
+      <p class="form-message" id="driverLoginMessage"></p>
+    </section>
+
+    <section id="driverApp" class="mobile-card hidden">
+      <header class="mobile-app-header">
+        <div>
+          <h2 id="driverWelcome">Olá!</h2>
+          <p class="small" id="driverCampaignInfo"></p>
+        </div>
+        <button class="btn" id="driverLogout">Sair</button>
+      </header>
+      <div class="mobile-steps" id="driverSteps">
+        <p class="small">Carregando atividades...</p>
+      </div>
+    </section>
+  </div>
+  <script>
+    // Prevent pinch-zoom/double-tap zoom for a native-app feeling.
+    document.addEventListener('gesturestart', event => event.preventDefault());
+    document.addEventListener('dblclick', event => {
+      event.preventDefault();
+      event.stopPropagation();
+    }, { passive: false });
+    // Dev helper: prefill login fields to speed up testing
+    (function(){
+      var PREFILL = { enabled: true, name: 'Thiago dos Santos Rodrigues', phone: '(51) 9 9133-5320' };
+      document.addEventListener('DOMContentLoaded', function(){
+        try {
+          if (!PREFILL.enabled) return;
+          var n = document.getElementById('driverName');
+          var p = document.getElementById('driverPhone');
+          if (n && !n.value && PREFILL.name) n.value = PREFILL.name;
+          if (p && !p.value && PREFILL.phone) p.value = PREFILL.phone;
+        } catch (e) { /* noop */ }
+      });
+    })();
+  </script>
+  <script src="js/driver.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OD Drive</title>
+  <script>
+    // Auto-redirect baseado no appId do Capacitor
+    (function() {
+      const appId = window?.Capacitor?.getPlatform ? window.Capacitor.appId : null;
+      
+      if (appId === 'com.oddrive.motorista') {
+        window.location.href = 'driver-mobile.html';
+      } else if (appId === 'com.oddrive.grafica') {
+        window.location.href = 'graphic-mobile.html';
+      } else {
+        // Fallback: detectar pelo hostname ou exibir menu
+        const path = window.location.pathname;
+        if (path.includes('driver')) {
+          window.location.href = 'driver-mobile.html';
+        } else if (path.includes('graphic')) {
+          window.location.href = 'graphic-mobile.html';
+        } else {
+          // Exibir escolha manual (útil para desenvolvimento web)
+          document.write('<h1 style="text-align:center;margin-top:50px;">OD Drive</h1>');
+          document.write('<div style="text-align:center;margin-top:30px;">');
+          document.write('<a href="driver-mobile.html" style="display:inline-block;padding:15px 30px;margin:10px;background:#007bff;color:#fff;text-decoration:none;border-radius:8px;">Área do Motorista</a>');
+          document.write('<a href="graphic-mobile.html" style="display:inline-block;padding:15px 30px;margin:10px;background:#28a745;color:#fff;text-decoration:none;border-radius:8px;">Área da Gráfica</a>');
+          document.write('</div>');
+        }
+      }
+    })();
+  </script>
+</head>
+<body>
+  <noscript>JavaScript é necessário para usar este aplicativo.</noscript>
+</body>
+</html>

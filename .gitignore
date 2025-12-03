@@ -1,0 +1,76 @@
+node_modules/
+.env
+.env.*
+dist/
+coverage/
+npm-debug.log*
+.DS_Store
+.vscode/
+logs/
+*.log
+.parcel-cache/
+/.idea/
+# Capacitor
+.capacitor/
+dist/
+build/
+
+# Android
+android/build/
+android/app/build/
+android/app/release/
+android/app/debug/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/*.iml
+android/.DS_Store
+android/captures/
+android/.externalNativeBuild/
+android/.cxx/
+*.apk
+*.aab
+
+# iOS
+ios/App/Pods/
+ios/App/build/
+ios/App/*.xcworkspace/xcuserdata/
+ios/App/*.xcodeproj/xcuserdata/
+ios/App/.DS_Store
+ios/App/Podfile.lock
+*.ipa
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup
+*.backup
+*-backup.*
+
+# Env
+.env.local
+.env.production
+
+# Logs
+logs/
+*.log
+
+# Certificates (NUNCA commitar!)
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+*.certSigningRequest

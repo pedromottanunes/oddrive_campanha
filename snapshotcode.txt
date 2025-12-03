@@ -1,0 +1,52 @@
+# Snapshot de código (cole na raiz do projeto)
+$proj = "D:\Clientes Agentes\OD Drive\Campanha CHECK\app_oficial_odrive"
+Set-Location $proj
+
+$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$out = Join-Path $proj ("snapshot_code_" + $timestamp + ".txt")
+
+# Extensões de código que queremos incluir (ajuste se necessário)
+$includeExts = @('.js','.mjs','.cjs','.ts','.jsx','.tsx','.html','.css','.scss','.md','.py','.java','.sh','.ps1')
+
+# Diretórios a excluir do snapshot (adicione outros se quiser)
+$excludeDirs = @('node_modules', '.git', 'dist', 'build', 'backend\data', 'frontend\assets\images')
+
+# Limite de tamanho por arquivo (200 KB) para evitar arquivos grandes de dados
+$maxSizeBytes = 200KB
+
+# Inicia arquivo de saída
+"SNAPSHOT OF CODE - $timestamp`nProject: $proj`n" | Out-File -FilePath $out -Encoding UTF8
+
+# Coleta arquivos de código, exclui diretórios e aplica limite de tamanho
+$files = Get-ChildItem -Path $proj -Recurse -File -ErrorAction SilentlyContinue |
+  Where-Object {
+    $ext = $_.Extension.ToLower()
+    $includeExts -contains $ext
+  } |
+  Where-Object {
+    $skip = $false
+    foreach ($d in $excludeDirs) {
+      if ($_.FullName -like "*\$d\*") { $skip = $true; break }
+    }
+    -not $skip
+  } |
+  Where-Object { $_.Length -le $maxSizeBytes } |
+  Sort-Object FullName
+
+# Escreve cada arquivo com cabeçalho e conteúdo
+$counter = 0
+foreach ($f in $files) {
+  $rel = $f.FullName.Substring($proj.Length + 1)
+  "`n=== FILE: $rel ===`n" | Out-File -FilePath $out -Append -Encoding UTF8
+  try {
+    Get-Content -Path $f.FullName -Raw -ErrorAction Stop | Out-File -FilePath $out -Append -Encoding UTF8
+    $counter++
+  } catch {
+    # corrigido: use ${rel} para evitar ambiguidade com ':' logo após a variável
+    "`n[ERROR reading ${rel}: $($_.Exception.Message)]`n" | Out-File -FilePath $out -Append -Encoding UTF8
+  }
+}
+
+"`nSnapshot completed. Files included: $counter`nOutput file: $out" | Out-File -FilePath $out -Append -Encoding UTF8
+Write-Host "Snapshot completo. Arquivos incluídos:" $counter
+Write-Host "Arquivo gerado:" $out

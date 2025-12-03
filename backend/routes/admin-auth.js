@@ -4,11 +4,12 @@ import { nanoid } from 'nanoid';
 import { findAdminUserByUsername, listAuditLogs } from '../services/db.js';
 import { authenticateAdmin } from '../middleware/authenticate-admin.js';
 import { createAdminSession, deleteAdminSession } from '../services/sessionStore.js';
+import { validateAdminCredentials } from '../middleware/validators.js';
 
 const router = Router();
 
 // POST /api/admin/login
-router.post('/login', async (req, res) => {
+router.post('/login', validateAdminCredentials, async (req, res) => {
   const { username, password } = req.body || {};
 
   if (!username || !password) {

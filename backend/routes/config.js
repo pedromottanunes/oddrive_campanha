@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { authenticateAdmin } from '../middleware/authenticate-admin.js';
+import { validateSpreadsheetId } from '../middleware/validators.js';
 import { getSpreadsheetMeta } from '../services/sheets.js';
 import { ensureLegacyStoreReady, loadLegacyDb, saveLegacyDb } from '../services/legacyStore.js';
 
@@ -28,7 +30,7 @@ router.get('/', (req, res) => {
 });
 
 // Define o ID da planilha mestre (Banco de Dados)
-router.post('/master-sheet', authenticateAdmin, async (req, res) => {
+router.post('/master-sheet', authenticateAdmin, validateSpreadsheetId, async (req, res) => {
   const { spreadsheetId } = req.body || {};
   if (!spreadsheetId || typeof spreadsheetId !== 'string' || !spreadsheetId.trim()) {
     return res.status(400).json({ error: 'spreadsheetId obrigatorio' });

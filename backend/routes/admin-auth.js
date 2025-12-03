@@ -5,6 +5,7 @@ import { findAdminUserByUsername, listAuditLogs } from '../services/db.js';
 import { authenticateAdmin } from '../middleware/authenticate-admin.js';
 import { createAdminSession, deleteAdminSession } from '../services/sessionStore.js';
 import { validateAdminCredentials } from '../middleware/validators.js';
+import { logLoginSuccess, logLoginFailure, logLogout } from '../services/auditLogger.js';
 
 const router = Router();
 
@@ -13,6 +14,7 @@ router.post('/login', validateAdminCredentials, async (req, res) => {
   const { username, password } = req.body || {};
 
   if (!username || !password) {
+    await logLoginFailure(username, 'Missing credentials', req);
     return res.status(400).json({ error: 'Username e senha sao obrigatorios' });
   }
 
@@ -20,16 +22,19 @@ router.post('/login', validateAdminCredentials, async (req, res) => {
     const user = await findAdminUserByUsername(username);
 
     if (!user) {
+      await logLoginFailure(username, 'User not found', req);
       return res.status(401).json({ error: 'Credenciais invalidas' });
     }
 
     if (!user.active) {
+      await logLoginFailure(username, 'User inactive', req);
       return res.status(403).json({ error: 'Usuario desativado' });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
 
     if (!passwordMatch) {
+      await logLoginFailure(username, 'Invalid password', req);
       return res.status(401).json({ error: 'Credenciais invalidas' });
     }
 
@@ -41,6 +46,8 @@ router.post('/login', validateAdminCredentials, async (req, res) => {
       name: user.name,
       role: user.role || 'admin',
     });
+
+    await logLoginSuccess(user.username, String(user._id), req);
 
     res.json({
       token: session.token,
@@ -55,6 +62,7 @@ router.post('/login', validateAdminCredentials, async (req, res) => {
     });
   } catch (err) {
     console.error('[admin-auth] Erro no login:', err);
+    await logLoginFailure(username, `Error: ${err.message}`, req);
     res.status(500).json({ error: 'Erro interno no servidor' });
   }
 });
@@ -72,8 +80,9 @@ router.get('/me', authenticateAdmin, (req, res) => {
 });
 
 // POST /api/admin/logout
-router.post('/logout', authenticateAdmin, (req, res) => {
+router.post('/logout', authenticateAdmin, async (req, res) => {
   const token = req.adminUser.sessionToken;
+  await logLogout(req.adminUser.username, req.adminUser.id);
   deleteAdminSession(token);
   res.json({ ok: true });
 });

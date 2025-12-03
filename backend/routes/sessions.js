@@ -19,6 +19,7 @@ import {
 } from '../services/db.js';
 import { ensureLegacyStoreReady, loadLegacyDb, saveLegacyDb } from '../services/legacyStore.js';
 import { createUserSession, getUserSession, deleteUserSession } from '../services/sessionStore.js';
+import { validateDriverLogin, validateGraphicLogin, validateBase64Image } from '../middleware/validators.js';
 
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 dias
 
@@ -399,7 +400,7 @@ async function syncDriverRowIfPossible(db, driver, campaign) {
   await updateSheetRow(campaign.sheetId, campaign.sheetName, driver.rowNumber, rowValues);
 }
 
-router.post('/driver', async (req, res) => {
+router.post('/driver', validateDriverLogin, async (req, res) => {
   const { name, phone, cpf, plate, email } = req.body || {};
   if (!trimString(name) || !trimString(phone)) {
     return res.status(400).json({ error: 'Nome e telefone sao obrigatorios' });
@@ -622,7 +623,7 @@ function normalizeGraphicDoc(campaign, doc = {}) {
   return graphic;
 }
 
-router.post('/graphic', async (req, res) => {
+router.post('/graphic', validateGraphicLogin, async (req, res) => {
   const { campaignCode, name } = req.body || {};
   const identifier = trimString(name);
   const rawCode = trimString(campaignCode);
@@ -760,7 +761,7 @@ router.get('/graphic/drivers', authenticateSession, (req, res) => {
 });
 
 // Recebe evidências do motorista (foto e/ou valor do odômetro) e persiste no db.json
-router.post('/evidence', authenticateSession, async (req, res) => {
+router.post('/evidence', authenticateSession, validateBase64Image, async (req, res) => {
   const { db, session } = req.sessionContext;
   if (session.role === 'driver') {
 

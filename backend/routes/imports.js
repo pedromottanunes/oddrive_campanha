@@ -6,6 +6,8 @@ import { buildDriversFromRows, resolveSheetName } from '../lib/campaignImport.js
 import { detectKmColumns } from '../lib/kmColumns.js';
 import { upsertCampaignRecord, upsertDriverRecord, upsertMasterRecord } from '../services/db.js';
 import { ensureLegacyStoreReady, loadLegacyDb, saveLegacyDb } from '../services/legacyStore.js';
+import { authenticateAdmin } from '../middleware/authenticate-admin.js';
+import { validateSpreadsheetId, requireFields } from '../middleware/validators.js';
 
 await ensureLegacyStoreReady();
 
@@ -89,7 +91,7 @@ function ensureDriverHeader(header = []) {
 }
 
 // Importa a planilha principal da campanha (aba Pagina1 por padrao)
-router.post('/campaign', authenticateAdmin, async (req, res) => {
+router.post('/campaign', authenticateAdmin, validateSpreadsheetId, requireFields('campaignName'), async (req, res) => {
   const {
     spreadsheetId,
     sheetName = 'Pagina1',
@@ -198,7 +200,7 @@ router.post('/campaign', authenticateAdmin, async (req, res) => {
 });
 
 // Importa planilha de KM (Planilha1) e tenta vincular por nome normalizado
-router.post('/km', authenticateAdmin, async (req, res) => {
+router.post('/km', authenticateAdmin, validateSpreadsheetId, requireFields('campaignId'), async (req, res) => {
   const { spreadsheetId, sheetName = 'Planilha1', campaignId } = req.body;
 
   if (!spreadsheetId || !campaignId) {

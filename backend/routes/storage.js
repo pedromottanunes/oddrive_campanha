@@ -1,9 +1,10 @@
 import { Router } from 'express';
+import { authenticateAdmin } from '../middleware/authenticate-admin.js';
 import { getStorageFileMetadata, openStorageFileStream } from '../services/mongo.js';
 
 const router = Router();
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', authenticateAdmin, async (req, res) => {
   try {
     const file = await getStorageFileMetadata(req.params.id);
     if (!file) {

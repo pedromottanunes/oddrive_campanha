@@ -89,7 +89,7 @@ function ensureDriverHeader(header = []) {
 }
 
 // Importa a planilha principal da campanha (aba Pagina1 por padrao)
-router.post('/campaign', async (req, res) => {
+router.post('/campaign', authenticateAdmin, async (req, res) => {
   const {
     spreadsheetId,
     sheetName = 'Pagina1',
@@ -198,7 +198,7 @@ router.post('/campaign', async (req, res) => {
 });
 
 // Importa planilha de KM (Planilha1) e tenta vincular por nome normalizado
-router.post('/km', async (req, res) => {
+router.post('/km', authenticateAdmin, async (req, res) => {
   const { spreadsheetId, sheetName = 'Planilha1', campaignId } = req.body;
 
   if (!spreadsheetId || !campaignId) {

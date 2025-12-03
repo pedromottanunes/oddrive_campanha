@@ -47,6 +47,10 @@ function readFromDisk() {
 }
 
 function writeToDisk(db) {
+  // Security: when DB_TYPE=mongo, do NOT persist to disk to avoid plaintext data exposure
+  if (USE_MONGO) {
+    return; // skip disk write
+  }
   try {
     fs.mkdirSync(new URL('.', DB_PATH), { recursive: true });
   } catch {
@@ -106,7 +110,7 @@ export function saveLegacyDb(db) {
       ? persistPromise.then(() => persistToMongo(snapshot))
       : persistToMongo(snapshot);
     persistPromise.catch(err => console.warn('[legacyStore] Persist loop', err?.message || err));
-    writeToDisk(snapshot);
+    // Security: do NOT write to disk when using Mongo
   } else {
     writeToDisk(snapshot);
   }

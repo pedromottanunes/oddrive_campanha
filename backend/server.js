@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import campaignsRouter from './routes/campaigns.js';
@@ -12,11 +14,56 @@ import adminAuthRouter from './routes/admin-auth.js';
 import os from 'os';
 
 const app = express();
+
+// Configuração de segurança HTTP com Helmet
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Necessário para apps legados
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000, // 1 ano
+    includeSubDomains: true,
+    preload: true,
+  },
+}));
+
+// Rate limiting para prevenir ataques de força bruta
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // Máximo 5 tentativas
+  message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Máximo 100 requisições
+  message: { error: 'Muitas requisições. Tente novamente mais tarde.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use(cors());
 // increase body limit to handle base64 images from mobile capture
 app.use(express.json({ limit: '20mb' }));
 
-// API
+// API com rate limiting
+app.use('/api/admin/login', loginLimiter); // Limite estrito para login
+app.use('/api/session/driver', loginLimiter); // Limite para login de motorista
+app.use('/api/session/graphic', loginLimiter); // Limite para login de gráfica
+app.use('/api', apiLimiter); // Limite geral para todas as APIs
+
 app.use('/api/campaigns', campaignsRouter);
 app.use('/api/imports', importsRouter);
 app.use('/api/config', configRouter);

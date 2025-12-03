@@ -18,6 +18,7 @@ import {
   findDriverRowInMasterTables,
 } from '../services/db.js';
 import { ensureLegacyStoreReady, loadLegacyDb, saveLegacyDb } from '../services/legacyStore.js';
+import { createUserSession, getUserSession, deleteUserSession } from '../services/sessionStore.js';
 
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 dias
 
@@ -346,22 +347,26 @@ function matchGraphicAccess(graphics = [], { name, phoneDigits, email }) {
   return candidates && candidates.length ? candidates[0] : null;
 }
 
-function createSession(db, { role, driverId = null, campaignId, meta = {} }) {
+function createDriverSession({ driverId, campaignId, driverName, phone, email }) {
   const token = nanoid(48);
-  const now = Date.now();
-  const session = {
-    id: nanoid(12),
-    token,
-    role,
-    driverId,
+  return createUserSession(token, {
+    userId: driverId,
+    name: driverName,
+    type: 'driver',
     campaignId,
-    meta,
-    createdAt: now,
-    lastAccessAt: now,
-    expiresAt: now + SESSION_TTL_MS,
-  };
-  db.sessions.push(session);
-  return session;
+    identity: phone || email,
+  });
+}
+
+function createGraphicSession({ graphicId, campaignId, graphicName, email }) {
+  const token = nanoid(48);
+  return createUserSession(token, {
+    userId: graphicId,
+    name: graphicName,
+    type: 'graphic',
+    campaignId,
+    identity: email,
+  });
 }
 
 function authenticateSession(req, res, next) {
@@ -369,18 +374,12 @@ function authenticateSession(req, res, next) {
   const [, token] = authHeader.split(' ');
   if (!token) return res.status(401).json({ error: 'Sessao invalida ou expirada' });
 
-  const db = loadDB();
-  const session = db.sessions.find(s => s.token === token);
-  if (!session) return res.status(401).json({ error: 'Sessao invalida ou expirada' });
-  if (session.expiresAt && session.expiresAt < Date.now()) {
-    db.sessions = db.sessions.filter(s => s.token !== token);
-    saveDB(db);
-    return res.status(401).json({ error: 'Sessao expirada' });
+  const session = getUserSession(token);
+  if (!session) {
+    return res.status(401).json({ error: 'Sessao invalida ou expirada' });
   }
 
-  session.lastAccessAt = Date.now();
-  saveDB(db);
-
+  const db = loadDB();
   req.sessionContext = { db, session };
   next();
 }
@@ -457,15 +456,12 @@ router.post('/driver', async (req, res) => {
     console.warn('Falha ao sincronizar linha do motorista na planilha', err?.message || err);
   }
 
-  const session = createSession(db, {
-    role: 'driver',
+  const session = createDriverSession({
     driverId: driver.id,
     campaignId: campaign.id,
-    meta: {
-      name: trimString(name),
-      phone: sanitizeDigits(phone),
-      email: sanitizeEmail(email),
-    },
+    driverName: trimString(name),
+    phone: sanitizeDigits(phone),
+    email: sanitizeEmail(email),
   });
 
   // Reflete campanha/motorista no MongoDB
@@ -688,14 +684,11 @@ router.post('/graphic', async (req, res) => {
     return res.status(403).json({ error: 'Grafica nao pertence a esta campanha.' });
   }
 
-  const session = createSession(db, {
-    role: 'graphic',
+  const session = createGraphicSession({
+    graphicId: match.id,
     campaignId: campaign.id,
-    meta: {
-      graphicId: match.id,
-      graphicName: match.name,
-      responsibleName: identifier,
-    },
+    graphicName: match.name,
+    email: identifier,
   });
 
   saveDB(db);

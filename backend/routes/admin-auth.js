@@ -3,41 +3,9 @@ import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
 import { findAdminUserByUsername, listAuditLogs } from '../services/db.js';
 import { authenticateAdmin } from '../middleware/authenticate-admin.js';
-import { ensureLegacyStoreReady, loadLegacyDb, saveLegacyDb } from '../services/legacyStore.js';
-
-await ensureLegacyStoreReady();
+import { createAdminSession, deleteAdminSession } from '../services/sessionStore.js';
 
 const router = Router();
-const ADMIN_SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
-
-function loadDB() {
-  const db = loadLegacyDb();
-  db.adminSessions = Array.isArray(db.adminSessions) ? db.adminSessions : [];
-  return db;
-}
-
-function saveDB(db) {
-  if (!Array.isArray(db.adminSessions)) db.adminSessions = [];
-  saveLegacyDb(db);
-}
-
-function createAdminSession(db, user) {
-  const token = nanoid(48);
-  const now = Date.now();
-  const session = {
-    id: nanoid(12),
-    token,
-    role: 'admin',
-    userId: String(user._id),
-    username: user.username,
-    name: user.name,
-    createdAt: now,
-    lastAccessAt: now,
-    expiresAt: now + ADMIN_SESSION_TTL_MS,
-  };
-  db.adminSessions.push(session);
-  return session;
-}
 
 // POST /api/admin/login
 router.post('/login', async (req, res) => {
@@ -64,9 +32,14 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Credenciais invalidas' });
     }
 
-    const db = loadDB();
-    const session = createAdminSession(db, user);
-    saveDB(db);
+    // Cria sessão segura em memória
+    const token = nanoid(48);
+    const session = createAdminSession(token, {
+      userId: String(user._id),
+      username: user.username,
+      name: user.name,
+      role: user.role || 'admin',
+    });
 
     res.json({
       token: session.token,
@@ -100,9 +73,7 @@ router.get('/me', authenticateAdmin, (req, res) => {
 // POST /api/admin/logout
 router.post('/logout', authenticateAdmin, (req, res) => {
   const token = req.adminUser.sessionToken;
-  const db = loadDB();
-  db.adminSessions = db.adminSessions.filter(s => s.token !== token);
-  saveDB(db);
+  deleteAdminSession(token);
   res.json({ ok: true });
 });
 

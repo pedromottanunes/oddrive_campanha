@@ -61,8 +61,17 @@ Thumbs.db
 *-backup.*
 
 # Env
+.env
+.env.*
 .env.local
 .env.production
+
+# Backend data (NUNCA commitar - dados sensíveis!)
+backend/data/
+backend/data/db.json
+secrets/
+*.pem
+*.key
 
 # Logs
 logs/

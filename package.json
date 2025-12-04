@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "node --watch backend/server.js",
+    "secret-scan": "node scripts/secret-scan.cjs",
     "create-admin": "node -r dotenv/config scripts/create-admin-user.js",
     "cap:sync": "npx cap sync",
     "cap:sync:android": "npx cap sync android",

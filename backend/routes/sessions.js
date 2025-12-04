@@ -348,7 +348,7 @@ function matchGraphicAccess(graphics = [], { name, phoneDigits, email }) {
   return candidates && candidates.length ? candidates[0] : null;
 }
 
-function createDriverSession({ driverId, campaignId, driverName, phone, email }) {
+async function createDriverSession({ driverId, campaignId, driverName, phone, email }) {
   const token = nanoid(48);
   return createUserSession(token, {
     userId: driverId,
@@ -359,7 +359,7 @@ function createDriverSession({ driverId, campaignId, driverName, phone, email })
   });
 }
 
-function createGraphicSession({ graphicId, campaignId, graphicName, email }) {
+async function createGraphicSession({ graphicId, campaignId, graphicName, email }) {
   const token = nanoid(48);
   return createUserSession(token, {
     userId: graphicId,
@@ -370,19 +370,24 @@ function createGraphicSession({ graphicId, campaignId, graphicName, email }) {
   });
 }
 
-function authenticateSession(req, res, next) {
-  const authHeader = req.headers.authorization || '';
-  const [, token] = authHeader.split(' ');
-  if (!token) return res.status(401).json({ error: 'Sessao invalida ou expirada' });
+async function authenticateSession(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const [, token] = authHeader.split(' ');
+    if (!token) return res.status(401).json({ error: 'Sessao invalida ou expirada' });
 
-  const session = getUserSession(token);
-  if (!session) {
-    return res.status(401).json({ error: 'Sessao invalida ou expirada' });
+    const session = await getUserSession(token);
+    if (!session) {
+      return res.status(401).json({ error: 'Sessao invalida ou expirada' });
+    }
+
+    const db = loadDB();
+    req.sessionContext = { db, session };
+    next();
+  } catch (err) {
+    console.error('[sessions] authenticateSession error', err?.message || err);
+    res.status(500).json({ error: 'Falha ao validar sessao' });
   }
-
-  const db = loadDB();
-  req.sessionContext = { db, session };
-  next();
 }
 
 async function syncDriverRowIfPossible(db, driver, campaign) {
@@ -457,7 +462,7 @@ router.post('/driver', validateDriverLogin, async (req, res) => {
     console.warn('Falha ao sincronizar linha do motorista na planilha', err?.message || err);
   }
 
-  const session = createDriverSession({
+  const session = await createDriverSession({
     driverId: driver.id,
     campaignId: campaign.id,
     driverName: trimString(name),
@@ -685,7 +690,7 @@ router.post('/graphic', validateGraphicLogin, async (req, res) => {
     return res.status(403).json({ error: 'Grafica nao pertence a esta campanha.' });
   }
 
-  const session = createGraphicSession({
+  const session = await createGraphicSession({
     graphicId: match.id,
     campaignId: campaign.id,
     graphicName: match.name,

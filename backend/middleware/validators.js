@@ -144,23 +144,22 @@ export function validateAdminCredentials(req, res, next) {
  * Valida imagem base64
  */
 export function validateBase64Image(req, res, next) {
-  const { imageBase64 } = req.body || {};
-  
-  if (!imageBase64 || typeof imageBase64 !== 'string') {
-    return res.status(400).json({ error: 'Imagem inválida' });
-  }
-  
-  // Verifica formato base64 data URL
-  if (!imageBase64.startsWith('data:image/')) {
+  const { imageBase64, photoData } = req.body || {};
+  const payload = typeof photoData === 'string' && photoData ? photoData : imageBase64;
+
+  // Quando nenhuma imagem foi enviada (ex.: motorista informou apenas o odômetro),
+  // não bloqueamos o fluxo.
+  if (!payload) return next();
+
+  if (!payload.startsWith('data:image/')) {
     return res.status(400).json({ error: 'Formato de imagem inválido' });
   }
-  
-  // Limite de tamanho: 10MB em base64 (~7.5MB arquivo real)
-  const sizeInBytes = (imageBase64.length * 3) / 4;
+
+  const sizeInBytes = (payload.length * 3) / 4;
   if (sizeInBytes > 10 * 1024 * 1024) {
     return res.status(400).json({ error: 'Imagem muito grande (máximo 10MB)' });
   }
-  
+
   next();
 }
 

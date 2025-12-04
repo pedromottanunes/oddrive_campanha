@@ -40,7 +40,7 @@ router.post('/login', validateAdminCredentials, async (req, res) => {
 
     // Cria sessão segura em memória
     const token = nanoid(48);
-    const session = createAdminSession(token, {
+    const session = await createAdminSession(token, {
       userId: String(user._id),
       username: user.username,
       name: user.name,
@@ -83,7 +83,7 @@ router.get('/me', authenticateAdmin, (req, res) => {
 router.post('/logout', authenticateAdmin, async (req, res) => {
   const token = req.adminUser.sessionToken;
   await logLogout(req.adminUser.username, req.adminUser.id);
-  deleteAdminSession(token);
+  await deleteAdminSession(token);
   res.json({ ok: true });
 });
 

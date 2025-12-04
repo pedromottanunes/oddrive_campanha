@@ -1071,30 +1071,47 @@ function renderGalleryItems(items = []) {
     img.style.width = '100%';
     img.style.height = '120px';
     img.style.objectFit = 'cover';
-    // support both absolute URLs and data URLs
-    img.src = it.url || it.photoData || '';
-    
-    // Show card only when image loads successfully
-    img.onload = () => {
-      card.style.display = '';
-      renderedCount++;
-    };
-    
-    // Remove card silently if image fails to load (404, deleted, etc)
-    img.onerror = () => {
-      try { 
-        card.remove(); 
-        // Check if no cards were rendered and show empty message
-        setTimeout(() => {
-          if (acompanheGalleryGrid && acompanheGalleryGrid.children.length === 0) {
-            acompanheGalleryGrid.classList.add('is-explorer');
-            acompanheGalleryGrid.innerHTML = '<div class="storage-empty">Nenhuma evidência encontrada para este motorista.</div>';
-          }
-        }, 100);
-      } catch (e) { 
-        card.style.display = 'none'; 
+
+    // Helper to set image source. If the URL points to internal storage (/api/storage/*),
+    // fetch it with `authFetch` to include Authorization header and convert to a blob URL.
+    (async () => {
+      try {
+        // If the item already has an inline data URL, use it directly
+        if (it.photoData && typeof it.photoData === 'string' && it.photoData.startsWith('data:image')) {
+          img.src = it.photoData;
+          img.onload = () => { card.style.display = ''; renderedCount++; };
+          img.onerror = () => { try { card.remove(); } catch (e) { card.style.display = 'none'; } };
+          return;
+        }
+
+        const src = it.url || '';
+        if (!src) {
+          // nothing to show
+          try { card.remove(); } catch (e) { card.style.display = 'none'; }
+          return;
+        }
+
+        if (typeof src === 'string' && src.startsWith('/api/storage/')) {
+          // fetch with auth header and convert to blob URL
+          const res = await authFetch(src);
+          if (!res.ok) throw new Error('Imagem nao autorizada ou indisponivel');
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          img.src = blobUrl;
+          img.onload = () => { card.style.display = ''; renderedCount++; try { URL.revokeObjectURL(blobUrl); } catch (e) {} };
+          img.onerror = () => { try { card.remove(); } catch (e) { card.style.display = 'none'; } };
+          return;
+        }
+
+        // Fallback: external/public URL
+        img.src = src;
+        img.onload = () => { card.style.display = ''; renderedCount++; };
+        img.onerror = () => { try { card.remove(); } catch (e) { card.style.display = 'none'; } };
+      } catch (err) {
+        console.warn('Erro ao carregar imagem protegida', err);
+        try { card.remove(); } catch (e) { card.style.display = 'none'; }
       }
-    };
+    })();
     
     // Add delete button
     const deleteBtn = document.createElement('button');
@@ -1286,17 +1303,41 @@ function renderGraphicStorageExplorer(
       card.style.position = 'relative';
       
       const link = document.createElement('a');
-      link.href = file.url || '#';
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       const img = document.createElement('img');
-      img.src = file.url || '';
       img.alt = file.name || '';
       img.loading = 'lazy';
-      img.onerror = () => {
-        card.classList.add('broken');
-        card.style.display = 'none';
-      };
+
+      // Set image and link. If file.url is internal (/api/storage/...), fetch with auth.
+      (async () => {
+        try {
+          const src = file.url || '';
+          if (!src) {
+            card.style.display = 'none';
+            return;
+          }
+          if (typeof src === 'string' && src.startsWith('/api/storage/')) {
+            const res = await authFetch(src);
+            if (!res.ok) throw new Error('Nao autorizado');
+            const blob = await res.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            img.src = blobUrl;
+            link.href = blobUrl;
+            img.onload = () => { try { URL.revokeObjectURL(blobUrl); } catch (e) {} };
+            img.onerror = () => { card.classList.add('broken'); card.style.display = 'none'; };
+          } else {
+            img.src = src;
+            link.href = src;
+            img.onerror = () => { card.classList.add('broken'); card.style.display = 'none'; };
+          }
+        } catch (err) {
+          console.warn('Erro ao carregar arquivo de storage:', err);
+          card.classList.add('broken');
+          card.style.display = 'none';
+        }
+      })();
+
       link.appendChild(img);
       card.appendChild(link);
       

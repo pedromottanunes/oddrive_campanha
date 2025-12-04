@@ -469,6 +469,17 @@ function formatNumber(value) {
 function formatStorageDateFolder(value) {
   const raw = String(value || '').trim();
   if (!raw) return '-';
+  // Expecting folder in YYYY-MM-DD format. Parse manually as UTC to avoid timezone shifts.
+  const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) {
+    const year = Number(m[1]);
+    const month = Number(m[2]);
+    const day = Number(m[3]);
+    if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+      const dt = new Date(Date.UTC(year, month - 1, day));
+      return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+  }
   const date = new Date(raw);
   if (Number.isNaN(date.getTime())) return raw;
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });

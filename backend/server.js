@@ -40,7 +40,7 @@ app.use(helmet({
 // Rate limiting para prevenir ataques de força bruta
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // Máximo 5 tentativas
+  max: 10, // Máximo 10 tentativas (relaxado para ambientes móveis/carrier NAT)
   message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,

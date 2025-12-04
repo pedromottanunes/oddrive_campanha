@@ -81,19 +81,24 @@ export function validateDriverLogin(req, res, next) {
  * Valida campos de login de gráfica
  */
 export function validateGraphicLogin(req, res, next) {
-  const { identifier, campaignCode } = req.body || {};
-  
-  if (!identifier || typeof identifier !== 'string' || identifier.trim().length < 3) {
+  // Accept either `identifier` or `name` field from clients (legacy/varied frontends)
+  const { identifier, name, campaignCode } = req.body || {};
+  const rawIdentifier = typeof identifier === 'string' && identifier.trim() ? identifier : (typeof name === 'string' ? name : '');
+
+  if (!rawIdentifier || rawIdentifier.trim().length < 3) {
     return res.status(400).json({ error: 'Identificador inválido (mínimo 3 caracteres)' });
   }
-  
+
   if (!campaignCode || !CAMPAIGN_CODE_PATTERN.test(campaignCode)) {
     return res.status(400).json({ error: 'Código de campanha inválido' });
   }
-  
-  req.body.identifier = sanitizeString(identifier);
+
+  // Normalize into both `name` and `identifier` so downstream handlers find either
+  const clean = sanitizeString(rawIdentifier);
+  req.body.identifier = clean;
+  req.body.name = clean;
   req.body.campaignCode = sanitizeString(campaignCode);
-  
+
   next();
 }
 

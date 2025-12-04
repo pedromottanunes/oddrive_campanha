@@ -176,3 +176,12 @@ if (adminUserName && adminUser.name) {
 
 // Carrega logs inicial
 loadLogs();
+
+// Voltar ao dashboard (adiciona listener em vez de usar onclick inline)
+const btnBackDashboard = document.getElementById('btnBackDashboard');
+if (btnBackDashboard) {
+  btnBackDashboard.addEventListener('click', () => {
+    // Prefer explicit navegação para o dashboard
+    window.location.href = '/index.html';
+  });
+}

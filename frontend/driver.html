@@ -50,9 +50,9 @@
       event.preventDefault();
       event.stopPropagation();
     }, { passive: false });
-    // Dev helper: prefill login fields to speed up testing
+    // Dev helper: prefill login fields to speed up testing (disabled in production)
     (function(){
-      var PREFILL = { enabled: true, name: 'Thiago dos Santos Rodrigues', phone: '(51) 9 9133-5320' };
+      var PREFILL = { enabled: false, name: 'Thiago dos Santos Rodrigues', phone: '(51) 9 9133-5320' };
       document.addEventListener('DOMContentLoaded', function(){
         try {
           if (!PREFILL.enabled) return;

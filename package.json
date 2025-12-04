@@ -31,6 +31,7 @@
     "@capacitor/preferences": "^7.0.2",
     "@capacitor/splash-screen": "^7.0.3",
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -53,5 +54,20 @@
     "*.{js,json,md}": [
       "echo 'Arquivos verificados com sucesso'"
     ]
-  }
+  },
+  "main": "admini.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pedromottanunes/oddrive_campanha.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pedromottanunes/oddrive_campanha/issues"
+  },
+  "homepage": "https://github.com/pedromottanunes/oddrive_campanha#readme"
 }

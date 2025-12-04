@@ -1,6 +1,6 @@
 import { getAdminSession } from '../services/sessionStore.js';
 
-export function authenticateAdmin(req, res, next) {
+export async function authenticateAdmin(req, res, next) {
   const authHeader = req.headers.authorization || '';
   const [, token] = authHeader.split(' ');
   
@@ -8,7 +8,7 @@ export function authenticateAdmin(req, res, next) {
     return res.status(401).json({ error: 'Autenticacao necessaria' });
   }
 
-  const session = getAdminSession(token);
+  const session = await getAdminSession(token);
   
   if (!session) {
     return res.status(401).json({ error: 'Sessao invalida ou expirada' });
@@ -26,7 +26,7 @@ export function authenticateAdmin(req, res, next) {
   next();
 }
 
-export function optionalAdmin(req, res, next) {
+export async function optionalAdmin(req, res, next) {
   const authHeader = req.headers.authorization || '';
   const [, token] = authHeader.split(' ');
   
@@ -35,7 +35,7 @@ export function optionalAdmin(req, res, next) {
     return next();
   }
 
-  const session = getAdminSession(token);
+  const session = await getAdminSession(token);
   
   if (!session) {
     req.adminUser = null;

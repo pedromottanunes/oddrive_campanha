@@ -19,7 +19,7 @@
     "mobile:graphic": "echo 'Certifique-se que index.html redireciona para graphic-mobile.html' && npm run cap:sync:android",
     "test-mongo": "node scripts/test-mongo-connection.js",
     "test-mongo:interactive": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/run-test-mongo.ps1",
-    "prepare": "husky"
+    "prepare": "node -e \"if(process.env.CI||process.env.RENDER){process.exit(0)};require('child_process').execSync('husky',{stdio:'inherit'})\""
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",

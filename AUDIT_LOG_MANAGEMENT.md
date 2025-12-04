@@ -14,7 +14,7 @@ Os logs de auditoria são salvos na collection `admin_audit_log` com a seguinte 
   entityType: "campaign",              // Tipo de entidade afetada
   entityId: "campaign_id_aqui",        // ID da entidade
   details: {                           // Detalhes específicos da ação
-    campaignName: "Campanha X",
+     mongodb+srv://<USERNAME>:<PASSWORD>@cluster0.gsd0urm.mongodb.net/odrive_app
     status: "ativa",
     // ... outros campos relevantes
   },
@@ -49,17 +49,10 @@ import { getMongoDb } from './backend/services/mongo.js';
 
 const db = await getMongoDb();
 const auditLogs = db.collection('admin_audit_log');
-
-// Listar últimos 10 logs
-const logs = await auditLogs
   .find()
   .sort({ timestamp: -1 })
   .limit(10)
   .toArray();
-
-console.log(logs);
-
-// Deletar um log específico
 await auditLogs.deleteOne({ _id: ObjectId('...') });
 
 // Deletar logs de um usuário específico
@@ -124,24 +117,10 @@ await auditLogs.find({ username: 'pedro' }).toArray();
 ### Contar quantas campanhas foram criadas
 ```javascript
 await auditLogs.countDocuments({ action: 'campaign:create' });
-```
-
-### Buscar quem deletou uma campanha específica
-```javascript
 await auditLogs.findOne({ 
   action: 'campaign:delete',
   entityId: 'campaign_id_aqui'
 });
-```
-
-### Listar todas as ações de um dia específico
-```javascript
-const startDate = new Date('2025-11-19T00:00:00.000Z');
-const endDate = new Date('2025-11-19T23:59:59.999Z');
-
-await auditLogs.find({
-  timestamp: {
-    $gte: startDate,
     $lte: endDate
   }
 }).toArray();

@@ -4,8 +4,9 @@
  */
 import IORedis from 'ioredis';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
-const USE_REDIS = process.env.USE_REDIS !== 'false'; // default true
+const REDIS_URL = process.env.REDIS_URL || '';
+// Enable Redis only when a REDIS_URL is provided and USE_REDIS is not explicitly 'false'
+const USE_REDIS = !!REDIS_URL && process.env.USE_REDIS !== 'false';
 
 let redis = null;
 
@@ -21,12 +22,14 @@ if (USE_REDIS) {
         return Math.min(times * 200, 2000); // exponential backoff
       },
     });
-    redis.on('error', (err) => console.error('[sessionStore] Redis error:', err.message));
+    redis.on('error', (err) => console.error('[sessionStore] Redis error:', err?.message || err));
     redis.on('connect', () => console.log('[sessionStore] Redis connected'));
   } catch (err) {
-    console.error('[sessionStore] Failed to initialize Redis:', err.message);
+    console.error('[sessionStore] Failed to initialize Redis:', err?.message || err);
     redis = null;
   }
+} else {
+  console.log('[sessionStore] Redis disabled (no REDIS_URL or explicitly turned off)');
 }
 
 const ADMIN_SESSION_TTL_SEC = 24 * 60 * 60; // 24 horas

@@ -77,8 +77,9 @@ const __dirname = path.dirname(__filename);
 app.use('/', express.static(path.join(__dirname, '..', 'frontend')));
 
 const PORT = process.env.PORT || 5173;
-app.listen(PORT, () => {
-  console.log(`Admin rodando em http://localhost:${PORT}`);
+// Bind explicitly to 0.0.0.0 for cloud platforms (Render expects the process to listen externally)
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Admin rodando em http://0.0.0.0:${PORT} (listening)`);
   // Auto-ensure DB schema on startup (delegado ao service `db.js`)
   (async () => {
     try {

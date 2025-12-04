@@ -90,18 +90,24 @@ export function auditRoute(action, entityType) {
  */
 export async function logAudit({ action, entityType, entityId, username, userId, metadata = {}, success = true }) {
   try {
+    const meta = metadata && typeof metadata === 'object' ? { ...metadata } : {};
+    const ip = meta.ipAddress || meta.ip || null;
+    const userAgent = meta.userAgent || null;
+    delete meta.ip;
+    delete meta.ipAddress;
+    delete meta.userAgent;
+
     await insertAuditLog({
       action,
       entityType,
       entityId: entityId || null,
       username: username || 'system',
       userId: userId || null,
-      metadata: {
-        ...metadata,
-        timestamp: new Date().toISOString(),
-        success,
-      },
-      createdAt: Date.now(),
+      details: meta,
+      ipAddress: ip,
+      userAgent,
+      timestamp: Date.now(),
+      success,
     });
   } catch (err) {
     console.error('[audit] Erro ao inserir log:', err);
